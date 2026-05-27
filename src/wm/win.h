@@ -378,10 +378,15 @@ win_maybe_options_or(struct window_maybe_options maybe, struct window_options de
 	return ret;
 }
 
-static inline struct window_options __attribute__((always_inline, const))
+static inline struct window_options __attribute__((always_inline)) attr_pure
 win_options(const struct win *w) {
-	return win_maybe_options_or(
+	struct window_options opt = win_maybe_options_or(
 	    win_maybe_options_fold(w->options_override, w->options), *w->options_default);
+	unsigned int max_radius = (unsigned int)max2(0, min2(w->widthb, w->heightb)) / 2;
+	if (opt.corner_radius > max_radius) {
+		opt.corner_radius = max_radius;
+	}
+	return opt;
 }
 
 /// Check if the window has changed in size. Border width is

@@ -1071,6 +1071,16 @@ void win_on_factor_change(session_t *ps, struct win *w) {
 			quit(ps);
 		}
 	}
+
+	auto wopts_raw = win_maybe_options_or(
+	    win_maybe_options_fold(w->options_override, w->options), *w->options_default);
+	unsigned int max_radius = (unsigned int)max2(0, min2(w->widthb, w->heightb)) / 2;
+	if (wopts_raw.corner_radius > max_radius) {
+		log_debug("Window %#010x (%s) corner radius capped from %u to %u due to "
+		          "window size (%dx%d)",
+		          win_id(w), w->name, wopts_raw.corner_radius, max_radius, w->widthb,
+		          w->heightb);
+	}
 }
 
 /**
