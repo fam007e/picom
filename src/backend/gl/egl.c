@@ -288,7 +288,10 @@ err:
 static bool egl_present(backend_t *base) {
 	struct egl_data *gd = (void *)base;
 	gl_finish_render(&gd->gl);
-	eglSwapBuffers(gd->display, gd->target_win);
+	if (!eglSwapBuffers(gd->display, gd->target_win)) {
+		log_error("Failed to swap buffers: %s", eglGetErrorString(eglGetError()));
+		return false;
+	}
 	return true;
 }
 

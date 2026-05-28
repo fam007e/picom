@@ -1191,7 +1191,9 @@ bool gl_init(struct gl_data *gd, session_t *ps) {
 	} else {
 		gd->is_nvidia = false;
 	}
-	gd->has_robustness = epoxy_has_gl_extension("GL_ARB_robustness");
+	gd->has_robustness = epoxy_has_gl_extension("GL_ARB_robustness") ||
+	                     epoxy_has_gl_extension("GL_KHR_robustness") ||
+	                     epoxy_gl_version() >= 45;
 	gd->has_egl_image_storage = epoxy_has_gl_extension("GL_EXT_EGL_image_storage");
 	gd->back_image.y_inverted = false;
 
