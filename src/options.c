@@ -379,7 +379,7 @@ static bool store_backend(const struct picom_option * /*opt*/, const struct pico
 	{.parse_prefix = parse_window_shader_prefix_with_cwd, .free_value = free}
 
 #ifdef CONFIG_OPENGL
-#define BACKENDS "xrender, glx"
+#define BACKENDS "xrender, glx, egl"
 #else
 #define BACKENDS "xrender"
 #endif

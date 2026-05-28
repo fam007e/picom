@@ -221,11 +221,12 @@ May also be one of the predefined kernels: `3x3box` (default), `5x5box`, `7x7box
 	Crop shadow of a window fully on a particular monitor to that monitor. This is currently implemented using the X RandR extension.
 
 *--backend* _BACKEND_::
-	Specify the backend to use: `xrender` or `glx`. `xrender` is the default one.
+	Specify the backend to use: `xrender`, `glx`, or `egl`. `xrender` is the default one.
 +
 --
 * `xrender` backend performs all rendering operations with X Render extension. It is what `xcompmgr` uses, and is generally a safe fallback when you encounter rendering artifacts or instability.
-* `glx` (OpenGL) backend performs all rendering operations with OpenGL. It is more friendly to some VSync methods, and has significantly superior performance on color inversion (*--invert-color-include*) or blur (*--blur-background*). It requires proper OpenGL 3.3 support from your driver and hardware. You may wish to look at the GLX performance optimization options below. *--xrender-sync-fence* might be needed on some systems to avoid delay in changes of screen contents.
+* `glx` (OpenGL) backend performs all rendering operations with OpenGL. It is more friendly to some VSync methods, and has significantly superior performance on color inversion (*--invert-color-include*) or blur (*--blur-background*). It requires proper OpenGL 3.3 support from your driver and hardware. *--xrender-sync-fence* might be needed on some systems to avoid delay in changes of screen contents.
+* `egl` (OpenGL via EGL) backend performs rendering using OpenGL with EGL for context creation instead of GLX. It shares the same rendering capabilities as the `glx` backend and requires OpenGL 3.3 support. EGL is cross-platform and not tied to X11, making it a useful alternative if the `glx` backend exhibits issues. *This backend is still experimental.* On NVIDIA hardware, suspending and resuming with `NVreg_PreserveVideoMemoryAllocations=0` may cause instability; setting that parameter to `1` or using the `glx` backend is recommended in that case.
 --
 
 *--no-use-damage*::
@@ -786,7 +787,7 @@ This section describes the interface of a custom shader, how it is used by picom
 
 A custom shader is a GLSL fragment shader program, which can be used to override the default way of how a window is rendered. If a custom shader is used, the default picom effects (e.g. dimming, color inversion, etc.) will no longer be automatically applied. It would be the custom shader's responsibility to apply these effects.
 
-The interface between picom and a custom shader is dependent on which backend is being used. The xrender backend doesn't support shader at all. Here we describe the interface provided by the glx backend.
+The interface between picom and a custom shader is dependent on which backend is being used. The xrender backend doesn't support shader at all. Here we describe the interface provided by the glx and egl backends.
 
 The shader must define a function, _vec4 window_shader()_, which would be the entry point of the shader. The returned _vec4_ will be used to set __gl_FragColor__. A function, _vec4 default_post_processing(vec4 c)_, is provided for applying the default picom effects to input color 'c'.
 
