@@ -34,13 +34,6 @@
 #include "utils/misc.h"
 #include "x.h"
 
-static inline uint64_t x_widen_sequence(struct x_connection *c, uint32_t sequence) {
-	if (sequence < c->last_sequence) {
-		// The sequence number has wrapped around
-		return (uint64_t)sequence + UINT32_MAX + 1;
-	}
-	return (uint64_t)sequence;
-}
 
 // === Error handling ===
 
@@ -389,11 +382,6 @@ static void x_connection_init_inner(struct x_connection *c) {
 	c->previous_xerror_handler = XSetErrorHandler(xerror);
 
 	c->screen_info = xcb_aux_get_screen(c->c, c->screen);
-
-	// Do a round trip to fetch the current sequence number
-	auto cookie = xcb_get_input_focus(c->c);
-	free(xcb_get_input_focus_reply(c->c, cookie, NULL));
-	c->last_sequence = cookie.sequence;
 }
 
 void x_connection_init(struct x_connection *c, Display *dpy) {
@@ -1109,21 +1097,14 @@ void x_free_monitor_info(struct x_monitors *m) {
 	m->count = 0;
 }
 
-static inline void x_ingest_event(struct x_connection *c, xcb_generic_event_t *event) {
-	if (event != NULL) {
-		assert(event->response_type != 1);
-		c->last_sequence = event->full_sequence;
-	}
-}
-
 static const xcb_raw_generic_event_t no_reply_success = {.response_type = 1};
 
 /// Complete all pending async requests that "come before" the given event.
 static void x_complete_async_requests(struct x_connection *c, xcb_generic_event_t *e) {
-	auto seq = x_widen_sequence(c, e->full_sequence);
+	uint32_t seq = e->full_sequence;
 	list_foreach_safe(struct x_async_request_base, i, &c->pending_x_requests, siblings) {
-		auto head_seq = x_widen_sequence(c, i->sequence);
-		if (head_seq > seq) {
+		uint32_t head_seq = i->sequence;
+		if ((int32_t)(head_seq - seq) > 0) {
 			break;
 		}
 		if (head_seq == seq && e->response_type == 0) {
@@ -1155,7 +1136,7 @@ static void x_complete_async_requests(struct x_connection *c, xcb_generic_event_
 
 static bool x_feed_event(struct x_connection *c, xcb_generic_event_t *e) {
 	x_complete_async_requests(c, e);
-	x_ingest_event(c, e);
+	assert(e->response_type != 1);
 
 	if (e->response_type != 0) {
 		return true;

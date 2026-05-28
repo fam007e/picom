@@ -101,10 +101,6 @@ struct x_connection {
 	XErrorHandler previous_xerror_handler;
 	/// Information about the default screen
 	xcb_screen_t *screen_info;
-	/// The sequence number of the last message returned by
-	/// `x_poll_for_message`. Used for sequence number overflow
-	/// detection.
-	uint32_t last_sequence;
 	/// The sequence number of the last completed request.
 	uint32_t latest_completed_request;
 	/// The sequence number of the "event sync" request we sent. This is
@@ -224,7 +220,7 @@ struct x_async_request_base {
 	void (*callback)(struct x_connection *, struct x_async_request_base *,
 	                 const xcb_raw_generic_event_t *reply_or_error);
 	/// The sequence number of the X request.
-	unsigned int sequence;
+	uint32_t sequence;
 	/// This request doesn't expect a reply. If this is true, in the success case,
 	/// `callback` will be called with a dummy reply whose `response_type` is 1.
 	bool no_reply;
